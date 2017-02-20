@@ -16,7 +16,8 @@
     "url": "https://github.com/Proxey/i18njson2csv/issues"
   },
   "bin": {
-    "i18njson2csv": "cli/i18njson2csv-cli.js"
+    "i18njson2csv": "cli/i18njson2csv-cli.js",
+    "csv2i18njson": "cli/csv2i18njson-cli.js"
   },
   "homepage": "https://github.com/Proxey/i18njson2csv#readme",
   "dependencies": {

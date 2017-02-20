@@ -53,7 +53,7 @@ var convertToCSV = exports.convertToCSV = function () {
                     case 8:
                         allKeys = [];
 
-                        console.log(_chalk2.default.green("Processing the following files: " + files.join(', ')));
+                        console.log("Processing the following files: " + files.join(', '));
 
                         //a map containing all jsons (Key is filename, value is json)
                         jsonMap = {};
