@@ -32,46 +32,42 @@ var convertToJSONs = exports.convertToJSONs = function () {
                     case 2:
                         buff = _context.sent;
                         content = buff.toString();
-                        rows = void 0;
+                        _context.next = 6;
+                        return parse(content, {
+                            delimiter: ';'
+                        });
 
-                        if (content.indexOf('\r\n') > -1) {
-                            rows = content.split('\r\n');
-                        } else if (content.indexOf('\r') > -1) {
-                            rows = content.split('\r');
-                        } else {
-                            rows = content.split('\n');
-                        }
+                    case 6:
+                        rows = _context.sent;
 
                         if (!(rows.length < 1)) {
-                            _context.next = 8;
+                            _context.next = 9;
                             break;
                         }
 
                         throw 'the file must contain at least 1 row';
 
-                    case 8:
+                    case 9:
                         files = [];
-                        firstRowCols = rows[0].split(';');
+                        firstRowCols = JSON.parse(JSON.stringify(rows[0]));
 
                         if (!(firstRowCols.length < 2)) {
-                            _context.next = 12;
+                            _context.next = 13;
                             break;
                         }
 
                         throw 'the file must contain at least 2 columns';
 
-                    case 12:
+                    case 13:
                         i = 1;
 
-                    case 13:
+                    case 14:
                         if (!(i < firstRowCols.length)) {
                             _context.next = 26;
                             break;
                         }
 
                         currentCol = firstRowCols[i].trim();
-
-                        currentCol = currentCol.substring(1, currentCol.length - 1);
 
                         if (!(currentCol.length === 0)) {
                             _context.next = 22;
@@ -93,7 +89,7 @@ var convertToJSONs = exports.convertToJSONs = function () {
 
                     case 23:
                         i++;
-                        _context.next = 13;
+                        _context.next = 14;
                         break;
 
                     case 26:
@@ -109,8 +105,7 @@ var convertToJSONs = exports.convertToJSONs = function () {
                         _underscore2.default.each(rows, function (row) {
                             for (var x = 0; x < files.length; x++) {
                                 var base = outputMap[files[x]];
-                                var rowParts = row.split(';');
-                                setPath(base, rowParts[0].split('.'), rowParts[x + 1]);
+                                setPath(base, row[0].split('.'), row[x + 1]);
                             }
                         });
 
@@ -161,9 +156,14 @@ var _path = require("path");
 
 var _path2 = _interopRequireDefault(_path);
 
+var _csvParse = require("csv-parse");
+
+var _csvParse2 = _interopRequireDefault(_csvParse);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var fs = _bluebird2.default.promisifyAll(_fsExtra2.default);
+var parse = _bluebird2.default.promisify(_csvParse2.default);
 /**
  * @param base {Object}
  * @param path {Array<String> }
@@ -175,7 +175,7 @@ var setPath = function setPath(base, path, value) {
         if (typeof base[current] !== 'undefined') {
             throw 'trying to set value ' + value + ' to field ' + current + ' but it\'s not undefined';
         } else {
-            base[current] = value.substring(1, value.length - 1);
+            base[current] = value;
         }
     } else if (path.length > 1) {
         if (typeof base[current] === 'undefined') {

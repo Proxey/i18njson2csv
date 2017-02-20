@@ -2,8 +2,10 @@ import Promise from "bluebird";
 import _fs from "fs-extra";
 import _ from "underscore";
 import path from "path";
+import _parse from "csv-parse";
 
 const fs = Promise.promisifyAll(_fs);
+const parse = Promise.promisify(_parse);
 /**
  * @param base {Object}
  * @param path {Array<String> }
@@ -15,7 +17,7 @@ let setPath = (base, path, value) => {
         if (typeof base[current] !== 'undefined') {
             throw 'trying to set value ' + value + ' to field ' + current + ' but it\'s not undefined';
         } else {
-            base[current] = value.substring(1, value.length - 1);
+            base[current] = value;
         }
     } else if (path.length > 1) {
         if (typeof base[current] === 'undefined') {
@@ -38,14 +40,9 @@ let setPath = (base, path, value) => {
 export async function convertToJSONs(inputFile, outputDir) {
     let buff = await fs.readFileAsync(inputFile);
     let content = buff.toString();
-    let rows;
-    if (content.indexOf('\r\n') > -1) {
-        rows = content.split('\r\n');
-    } else if (content.indexOf('\r') > -1) {
-        rows = content.split('\r');
-    } else {
-        rows = content.split('\n');
-    }
+    let rows = await parse(content, {
+        delimiter: ';'
+    });
 
     if (rows.length < 1) {
         throw 'the file must contain at least 1 row';
@@ -54,13 +51,12 @@ export async function convertToJSONs(inputFile, outputDir) {
     let files = [];
 
 
-    let firstRowCols = rows[0].split(';');
+    let firstRowCols = JSON.parse(JSON.stringify(rows[0]));
     if (firstRowCols.length < 2) {
         throw 'the file must contain at least 2 columns';
     }
     for (let i = 1; i < firstRowCols.length; i++) {
         let currentCol = firstRowCols[i].trim();
-        currentCol = currentCol.substring(1, currentCol.length - 1);
         if (currentCol.length === 0) {
             if (i === 1) {
                 throw 'the file must contain at least 2 columns';
@@ -71,28 +67,24 @@ export async function convertToJSONs(inputFile, outputDir) {
         }
     }
 
-    let outputMap = {
 
-    };
+    let outputMap = {};
 
-    for(let i = 0; i < files.length; i++) {
+    for (let i = 0; i < files.length; i++) {
         outputMap[files[i]] = {};
     }
-
 
     //right here we remove the first line since it's the headline
     rows.shift();
     _.each(rows, row => {
-        for(let x = 0; x < files.length; x++) {
+        for (let x = 0; x < files.length; x++) {
             let base = outputMap[files[x]];
-            let rowParts = row.split(';');
-            setPath(base, rowParts[0].split('.'), rowParts[x+1]);
+            setPath(base, row[0].split('.'), row[x + 1]);
         }
     });
 
 
-
-    for(let key in outputMap) {
+    for (let key in outputMap) {
         console.log(`writing to ` + path.join(outputDir, `out_${key}`));
         await fs.writeFileAsync(path.join(outputDir, `out_${key}`), JSON.stringify(outputMap[key], null, 3));
     }
